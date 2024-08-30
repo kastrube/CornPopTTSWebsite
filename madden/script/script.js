@@ -3,70 +3,53 @@ const dice2 = document.getElementById('dice2');
 const rollButton = document.getElementById('rollButton');
 
 let rolling = false;
-let rollInterval;
 
-function startRollingDice(dice) {
+function rollDie(die) {
+    const tl = gsap.timeline();
+    const dieSize = 50; // Assuming the die is 50x50 pixels
+    const rolls = Math.floor(Math.random() * 2) + 3; // 3 to 4 rolls
+
+    for (let i = 0; i < rolls; i++) {
+        tl.to(die, {
+            duration: 0.25,
+            rotation: 90,
+            transformOrigin: "100% 100%",
+            ease: "power1.inOut"
+        })
+        .set(die, {
+            x: `+=${dieSize}`,
+            rotation: 0,
+            transformOrigin: "50% 50%"
+        });
+    }
+
+    // Final rotation to random face
+    const finalRotation = Math.floor(Math.random() * 4) * 90;
+    tl.to(die, {
+        duration: 0.25,
+        rotation: finalRotation,
+        transformOrigin: "50% 50%",
+        ease: "power1.inOut",
+        onComplete: () => {
+            rolling = false;
+        }
+    });
+
+    return tl;
+}
+
+function startRollingDice() {
     if (!rolling) {
         rolling = true;
-        gsap.to(dice, { duration: 0.2, scale: 0.9, ease: "power1.inOut" });
-        rollInterval = setInterval(() => rollDice(dice), 50);
+
+        // Reset dice position
+        gsap.set([dice1, dice2], { x: 0, rotation: 0 });
+
+        const masterTimeline = gsap.timeline();
+
+        masterTimeline.add(rollDie(dice1), 0);
+        masterTimeline.add(rollDie(dice2), 0.15); // Slight delay for second die
     }
 }
 
-function rollDice(dice) {
-    const randomX = Math.random() * 360;
-    const randomY = Math.random() * 360;
-    const randomZ = Math.random() * 360;
-
-    gsap.to(dice, {
-        duration: 0.05,
-        rotationX: randomX,
-        rotationY: randomY,
-        rotationZ: randomZ,
-        ease: "none"
-    });
-}
-
-function stopRollingDice(dice) {
-    clearInterval(rollInterval);
-    rolling = false;
-
-    const outcome = Math.floor(Math.random() * 6) + 1;
-    const rotations = {
-        1: [0, 0],
-        2: [-90, 0],
-        3: [0, -90],
-        4: [0, 90],
-        5: [90, 0],
-        6: [180, 0]
-    };
-
-    const [endRotationX, endRotationY] = rotations[outcome];
-    const randomZ = Math.random() * 360;
-
-    gsap.to(dice, {
-        duration: 1,
-        rotationX: endRotationX,
-        rotationY: endRotationY,
-        rotationZ: randomZ,
-        scale: 1,
-        ease: "bounce.out"
-    });
-}
-
-rollButton.addEventListener('mousedown', () => {
-    startRollingDice(dice1);
-    startRollingDice(dice2);
-});
-
-rollButton.addEventListener('mouseup', () => {
-    stopRollingDice(dice1);
-    stopRollingDice(dice2);
-});
-
-rollButton.addEventListener('mouseleave', () => {
-    if (rolling) {
-        stopRollingDice(dice1);
-        stopRollingDice(dice2);
-    }
-});
+rollButton.addEventListener('click', startRollingDice);
